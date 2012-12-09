@@ -22,8 +22,9 @@ let messager = new MessageHandler(chain)
 
 // generate an infinite sequence of our source data    
 let rec sourceData (node:Node) = seq{
-    yield node.generateData()
+    let data = node.generateData()
     Console.WriteLine("data generated")
+    yield data
     yield! sourceData node
 } 
 

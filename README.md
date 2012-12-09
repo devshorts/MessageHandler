@@ -3,11 +3,27 @@ MesageHandler
 
 This is an F# async messaging handler that leverages computational expressions and lightweight agents to enable asynchronous messaging passing into a message pump chain.
 
+
+===
+Overview
+===
+
 The idea here is you have a series of nodes hooked up like this:
 
+```
 Node1 -> Node2 -> Node3
+```
+   
+This represents a message passing chain.  Assuming `Node1` is the source node, we want this series to execute every time `Node1` has data to push.  We can represent the evaluation of an entire chain as a function and use a message queue to execute the function each time we receive data. 
 
-This represents a message passing chain.  Each node has a `processData` function that takes a `Data` class. If it successfully processed the data it'll return a `Some` of a new `Data` class. If it didn't process the data and wants to end the chain, it will return `None`.  
+The message queue will be asynchornous so even if pieces of the chain take a while to execute, it won't block the 
+source node from pushing more data to the chain.
+
+===
+Details
+===
+
+Each node has a `processData` function that takes a `Data` class. If it successfully processed the data it'll return a `Some` of a new `Data` class. If it didn't process the data and wants to end the chain, it will return `None`.  
 
 The chain is executed using a `maybe monad`, so if any series of the chain returns `None` then the monadic binding will fail and the rest of the nodes won't execute.  
 
@@ -101,4 +117,28 @@ member private this.testResult ret =
 ```
 
 Since the `processNodesFunc` execution will return a `bool option` if it processed everything or not            
+
+===
+Maybe Monad
+===
                                                          
+The `maybe` monad is built using a classical computation expression definition like this:
+
+```
+type MaybeBuilder() =
+    let bind value func =
+        match value with
+            | Some(x) -> func x
+            | _ -> None
+
+    let wrap value = Some(value)
+
+    member this.Bind(x, f) = bind x f
+    member this.Delay(f) = f()
+    member this.Return(x) = wrap x
+    member this.ReturnFrom(x) = x
+    member this.Combine(a, b) = if Option.isSome a then a
+                                else b 
+    member this.Zero(a) = None
+                                                                                                                 ```
+

@@ -140,6 +140,7 @@ type MaybeBuilder() =
     member this.Combine(a, b) = if Option.isSome a then a
                                 else b 
     member this.Zero(a) = None
+```
     
 ===
 Output
@@ -184,5 +185,3 @@ chain succeeded
 But if you look at what's happening, we start after the main program has printed "done", indicating that we're doing all our work in seperate threads.
 
 Next, every time we generate data we post it to the message queue.  After that you can use the unique random numbers to trace what's going on.  `Node1` is generating data faster than an entire chain can process it, which is why things are jumbled up. Each time the node generates data we begin a new chain without waiting for previous chains to complete.
-
-

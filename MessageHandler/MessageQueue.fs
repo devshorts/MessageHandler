@@ -1,5 +1,6 @@
 ﻿module MessageQueue
 open System
+open System.Threading
 open FrameNode
 
 // data structure for message pump
@@ -30,6 +31,8 @@ type MessageHandler(chain:MessagePump) =
 
     let maybe = MaybeBuilder()
 
+    let chainCompletedEvent = new Event<Data>()
+
     // If all nodes processed the chain
     // we'll return bool option true, otherwise we'll return None
     member private this.processNodesFunc pump initialData =   
@@ -39,7 +42,7 @@ type MessageHandler(chain:MessagePump) =
                             | MessagePump.Consumer(i) -> 
                                          // got to the end so we can say we processed a chain
                                         let! consumerMessage = i.processData(initialData)
-                                        return true
+                                        return consumerMessage
                             | MessagePump.Messager(curr, nextNode) -> 
                                         let! nextMessage = curr.processData initialData
                                         return! processNodesFunc' nextNode nextMessage
@@ -50,24 +53,33 @@ type MessageHandler(chain:MessagePump) =
     // curry the execution chain 
     member private this.executeChain data = this.processNodesFunc chain data
 
-    // executes an async item, if the async returned Some we'll say the chain 
-    // succeeded
     member private this.testResult ret = 
         if Option.isSome (ret) then 
-            Console.WriteLine("chain succeeded")
+            true
         else
-            Console.WriteLine("chain didn't succeed")
-
-        Console.WriteLine()
+            false
 
     // process a chain instance function
-    member this.agent = MailboxProcessor.Start(fun item -> 
-        let rec processLoop = 
-            async{
-                    let! postedData = item.Receive()
-                    Console.WriteLine("received data")
+    member private this.agent = 
+        let syncContext = SynchronizationContext.Current
+
+        MailboxProcessor.Start(fun item -> 
+            let rec processLoop _ = 
+                async{
+                    let! (postedData:Data) = item.Receive()
+                    Console.WriteLine("        RECEIVED: {0}", postedData.getValue.ToString())
                     let result = this.executeChain postedData
-                    this.testResult result
-                    return! processLoop
-            }
-        processLoop)
+                    if this.testResult result then
+                        chainCompletedEvent.Trigger (Option.get result)
+                        
+                    return! processLoop()
+                }
+                                
+            processLoop())
+
+    member this.queueData data = 
+        this.agent.Post data
+
+    member this.chainCompleted = chainCompletedEvent.Publish
+
+    member this.queuSize _ = this.agent.CurrentQueueLength

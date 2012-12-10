@@ -67,16 +67,22 @@ When messages are posted to the agent, the agent will execute
 
 ```
 // process a chain instance function
-member this.agent = MailboxProcessor.Start(fun item -> 
-    let rec processLoop = 
-        async{
-                let! postedData = item.Receive()
-                Console.WriteLine("received data")
+member private this.agent = 
+    let syncContext = SynchronizationContext.Current
+
+    MailboxProcessor.Start(fun item -> 
+        let rec processLoop _ = 
+            async{
+                let! (postedData:Data) = item.Receive()
+                Console.WriteLine("        RECEIVED: {0}", postedData.getValue.ToString())
                 let result = this.executeChain postedData
-                this.testResult result
-                return! processLoop
-        }
-    processLoop)
+                if this.testResult result then
+                    chainCompletedEvent.Trigger (Option.get result)
+                        
+                return! processLoop()
+            }
+                                
+        processLoop())
 ```
 
 Which will pass the posted data to a chain executor:
@@ -116,7 +122,7 @@ member private this.testResult ret =
     Console.WriteLine()
 ```
 
-Since the `processNodesFunc` execution will return a `bool option` if it processed everything or not            
+Since the `processNodesFunc` execution will return a `bool option` if it processed everything or not. If it passes then we dispatch an event to the `chainCompletedEvent` handler that we can catch elsewhere.
 
 ===
 Maybe Monad
@@ -146,42 +152,58 @@ type MaybeBuilder() =
 Output
 ===
 
-The output here can be a little confusing
+The output should be pretty clear. We post data when we've generated a value from our sequence. The agent logs when it receives the value, and we hook into a completion event that is dispatched when the chain finally fires
 
 ```
 done
-data generated
-posting data
-received data
-In node node1 with data 92377709
-data generated
-posting data
-received data
-In node node1 with data 187038296
-In node node2 with data 92377709
-data generated
-posting data
-received data
-In node node1 with data 491733099
-In node node2 with data 187038296
-In node node3 with data 92377709
-data generated
-posting data
-received data
-In node node2 with data 491733099
-In node node1 with data 1792730232
-In node node3 with data 187038296
-chain succeeded
-
-In node node3 with data 491733099
-data generated
-posting data
-received data
-In node node1 with data 232675499
-In node node2 with data 1792730232
-chain succeeded
+POSTING 1
+        RECEIVED: 1
+POSTING 2
+        RECEIVED: 2
+POSTING 3
+        RECEIVED: 3
+POSTING 4
+        RECEIVED: 4
+POSTING 5
+POSTING 6
+POSTING 7
+POSTING 8
+POSTING 9
+POSTING 10
+        RECEIVED: 5
+POSTING 11
+        RECEIVED: 6
+POSTING 12
+        RECEIVED: 7
+POSTING 13
+        RECEIVED: 8
+POSTING 14
+        RECEIVED: 9
+POSTING 15
+POSTING 16
+POSTING 17
+POSTING 18
+POSTING 19
+        RECEIVED: 10
+        RECEIVED: 11
+        RECEIVED: 12
+        RECEIVED: 13
+        RECEIVED: 14
+        RECEIVED: 15
+        RECEIVED: 16
+        RECEIVED: 17
+        RECEIVED: 18
+                COMPLETED: 10
+        RECEIVED: 19
+                COMPLETED: 11
+                COMPLETED: 12
+                COMPLETED: 13
+                COMPLETED: 14
+                COMPLETED: 15
+                COMPLETED: 16
+                COMPLETED: 17
+                COMPLETED: 18
+                COMPLETED: 19
 ```
 
-But if you look at what's happening, we start after the main program has printed "done", indicating that we're doing all our work in seperate threads.
-
-Next, every time we generate data we post it to the message queue.  After that you can use the unique random numbers to trace what's going on.  `Node1` is generating data faster than an entire chain can process it, which is why things are jumbled up. Each time the node generates data we begin a new chain without waiting for previous chains to complete.
+A node will only process a message if the input value (the integer) is 2 digits or more, which is why we start getting completion messages after item 10. We also stopped generating the infinte sequence after 20 items just for demonstration.

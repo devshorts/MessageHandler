@@ -6,7 +6,7 @@ open FrameNode
 // data structure for message pump
 
 type MessagePump = 
-    | Consumer of Node
+    | EndConsumer of Node
     | Messager of Node * MessagePump
 
 type MaybeBuilder() =
@@ -39,7 +39,7 @@ type MessageHandler(chain:MessagePump) =
             let rec processNodesFunc' pump initialData = 
                     maybe{
                         match pump with 
-                            | MessagePump.Consumer(i) -> 
+                            | MessagePump.EndConsumer(i) -> 
                                          // got to the end so we can say we processed a chain
                                         let! consumerMessage = i.processData(initialData)
                                         return consumerMessage

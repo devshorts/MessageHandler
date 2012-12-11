@@ -12,7 +12,7 @@ let node1 = new Node("node1")
 let node2 = new Node("node2")
 let node3 = new Node("node3")
 
-let chain = MessagePump.Messager(node1, MessagePump.Messager(node2, MessagePump.Consumer(node3)))
+let chain = MessagePump.Messager(node1, MessagePump.Messager(node2, MessagePump.EndConsumer(node3)))
 
 // give our chain to the message handler. this will 
 // handle the message pump queueing

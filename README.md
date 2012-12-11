@@ -159,51 +159,51 @@ done
 POSTING 1
         RECEIVED: 1
 POSTING 2
-        RECEIVED: 2
 POSTING 3
-        RECEIVED: 3
 POSTING 4
-        RECEIVED: 4
 POSTING 5
 POSTING 6
 POSTING 7
 POSTING 8
 POSTING 9
 POSTING 10
-        RECEIVED: 5
+        RECEIVED: 2
 POSTING 11
-        RECEIVED: 6
 POSTING 12
-        RECEIVED: 7
 POSTING 13
-        RECEIVED: 8
 POSTING 14
-        RECEIVED: 9
 POSTING 15
 POSTING 16
 POSTING 17
 POSTING 18
 POSTING 19
+        RECEIVED: 3
+        RECEIVED: 4
+        RECEIVED: 5
+        RECEIVED: 6
+        RECEIVED: 7
+        RECEIVED: 8
+        RECEIVED: 9
         RECEIVED: 10
+                COMPLETED: 10, Queue length 9
         RECEIVED: 11
+                COMPLETED: 11, Queue length 8
         RECEIVED: 12
+                COMPLETED: 12, Queue length 7
         RECEIVED: 13
+                COMPLETED: 13, Queue length 6
         RECEIVED: 14
+                COMPLETED: 14, Queue length 5
         RECEIVED: 15
+                COMPLETED: 15, Queue length 4
         RECEIVED: 16
+                COMPLETED: 16, Queue length 3
         RECEIVED: 17
+                COMPLETED: 17, Queue length 2
         RECEIVED: 18
-                COMPLETED: 10
+                COMPLETED: 18, Queue length 1
         RECEIVED: 19
-                COMPLETED: 11
-                COMPLETED: 12
-                COMPLETED: 13
-                COMPLETED: 14
-                COMPLETED: 15
-                COMPLETED: 16
-                COMPLETED: 17
-                COMPLETED: 18
-                COMPLETED: 19
+                COMPLETED: 19, Queue length 0
 ```
 
 A node will only process a message if the input value (the integer) is 2 digits or more, which is why we start getting completion messages after item 10. We also stopped generating the infinte sequence after 20 items just for demonstration.

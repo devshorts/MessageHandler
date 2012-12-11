@@ -35,7 +35,7 @@ type MessageHandler(chain:MessagePump) =
 
     // If all nodes processed the chain
     // we'll return bool option true, otherwise we'll return None
-    member private this.processNodesFunc pump initialData =   
+    let processNodesFunc pump initialData =   
             let rec processNodesFunc' pump initialData = 
                     maybe{
                         match pump with 
@@ -49,32 +49,39 @@ type MessageHandler(chain:MessagePump) =
                     }    
                                      
             processNodesFunc' pump initialData
-                                                                        
-    // curry the execution chain 
-    member private this.executeChain data = this.processNodesFunc chain data
 
-    member private this.testResult ret = 
+    // curry the execution chain 
+    let executeChain data = processNodesFunc chain data    
+
+    let testResult ret = 
         if Option.isSome (ret) then 
             true
         else
             false
 
-    // process a chain instance function
-    member private this.agent = 
-        let syncContext = SynchronizationContext.Current
-
+     // process a chain instance function
+    let agent = 
         MailboxProcessor.Start(fun item -> 
+            let rec recvLoop _ = 
                 async{
                     let! (postedData:Data) = item.Receive()
                     Console.WriteLine("        RECEIVED: {0}", postedData.getValue.ToString())
-                    let result = this.executeChain postedData
-                    if this.testResult result then
-                        chainCompletedEvent.Trigger (Option.get result)
-                })                                
 
+                    let! result = async{
+                                    return executeChain postedData
+                                  }
+
+                    if testResult result then
+                        chainCompletedEvent.Trigger (Option.get result)
+                    
+                    return! recvLoop() 
+                }  
+            recvLoop()
+        )
+                             
     member this.queueData data = 
-        this.agent.Post data
+        agent.Post data
 
     member this.chainCompleted = chainCompletedEvent.Publish
 
-    member this.queuSize _ = this.agent.CurrentQueueLength
+    member this.queuSize _ = agent.CurrentQueueLength

@@ -36,7 +36,7 @@ let startChain rootNode = (sourceData rootNode) |>
 
 // event completed handler
 let dataProcessed (data:Data) = 
-    Console.WriteLine ("                COMPLETED: {0}", data.getValue)
+    Console.WriteLine ("                COMPLETED: {0}, Queue length {1}", data.getValue, messager.queuSize())
 
 // hook into event completed
 messager.chainCompleted.Add(dataProcessed)

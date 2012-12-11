@@ -1,7 +1,7 @@
 MessageHandler
 =============
 
-This is an F# async messaging handler that leverages computational expressions and lightweight agents to enable asynchronous messaging passing into a message pump chain.
+This is an F# non-blocking messaging handler that leverages computational expressions and lightweight agents to enable non-blocking messaging passing into a message pump chain.
 
 
 ===

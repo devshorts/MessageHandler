@@ -4,6 +4,7 @@ open System
 open System.Diagnostics
 open FrameNode
 open MessageQueue
+open Utils
 
 // source nodes
 
@@ -33,12 +34,6 @@ let startChain rootNode = (sourceData rootNode) |>
                                              messager.queueData data
                                       )
 
-let chainEntryPoint = 
-    async{
-        do! Async.SwitchToNewThread()
-        startChain node1
-    }
-
 // event completed handler
 let dataProcessed (data:Data) = 
     Console.WriteLine ("                COMPLETED: {0}", data.getValue)
@@ -46,7 +41,7 @@ let dataProcessed (data:Data) =
 // hook into event completed
 messager.chainCompleted.Add(dataProcessed)
 
-Async.Start chainEntryPoint
+Utils.threadUtil.start (fun () -> startChain node1)
 
 Console.WriteLine("done");
 

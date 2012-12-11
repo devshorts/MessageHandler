@@ -1,4 +1,4 @@
-MesageHandler
+MessageHandler
 =============
 
 This is an F# async messaging handler that leverages computational expressions and lightweight agents to enable asynchronous messaging passing into a message pump chain.

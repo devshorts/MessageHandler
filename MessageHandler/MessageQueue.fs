@@ -64,18 +64,13 @@ type MessageHandler(chain:MessagePump) =
         let syncContext = SynchronizationContext.Current
 
         MailboxProcessor.Start(fun item -> 
-            let rec processLoop _ = 
                 async{
                     let! (postedData:Data) = item.Receive()
                     Console.WriteLine("        RECEIVED: {0}", postedData.getValue.ToString())
                     let result = this.executeChain postedData
                     if this.testResult result then
                         chainCompletedEvent.Trigger (Option.get result)
-                        
-                    return! processLoop()
-                }
-                                
-            processLoop())
+                })                                
 
     member this.queueData data = 
         this.agent.Post data

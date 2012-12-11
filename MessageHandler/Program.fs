@@ -41,7 +41,7 @@ let dataProcessed (data:Data) =
 // hook into event completed
 messager.chainCompleted.Add(dataProcessed)
 
-Utils.threadUtil.start (fun () -> startChain node1)
+Utils.ThreadUtil.start (fun () -> startChain node1)
 
 Console.WriteLine("done");
 

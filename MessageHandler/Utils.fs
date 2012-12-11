@@ -2,10 +2,15 @@
 
 open System
 open System.Threading
+open System.Threading.Tasks
 
 type ThreadUtil() = 
-    member private this.createThread func = new Thread(new ThreadStart(func))
+    static let taskFactory = new TaskFactory()
 
-    member this.start func = (this.createThread func).Start()
+    static member private createThread func = new Thread(new ThreadStart(func))
+
+    static member start func = (ThreadUtil.createThread func).Start()
+
+    static member startAsTask func = taskFactory.StartNew func
 
 let threadUtil = new ThreadUtil()

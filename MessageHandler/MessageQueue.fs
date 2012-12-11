@@ -1,6 +1,7 @@
 ﻿module MessageQueue
 open System
 open System.Threading
+open System.Threading.Tasks
 open FrameNode
 
 // data structure for message pump
@@ -61,20 +62,20 @@ type MessageHandler(chain:MessagePump) =
 
      // process a chain instance function
     let agent = 
+        let taskFactory = new TaskFactory()
+
         MailboxProcessor.Start(fun item -> 
             let rec recvLoop _ = 
                 async{
                     let! (postedData:Data) = item.Receive()
+                    
                     Console.WriteLine("        RECEIVED: {0}", postedData.getValue.ToString())
 
-                    let! result = async{
-                                    return executeChain postedData
-                                  }
-
+                    let result = executeChain postedData
                     if testResult result then
                         chainCompletedEvent.Trigger (Option.get result)
-                    
-                    return! recvLoop() 
+
+                    return! recvLoop()
                 }  
             recvLoop()
         )
